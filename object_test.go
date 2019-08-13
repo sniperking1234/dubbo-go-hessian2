@@ -15,10 +15,120 @@
 package hessian
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"math"
+	"net/http"
+	"os"
 	"reflect"
 	"testing"
+
+	"github.com/apache/dubbo-go-hessian2/java_exception"
 )
+
+type TriggerParam struct {
+	JobId                 int
+	ExecutorHandler       string
+	ExecutorParams        string
+	ExecutorBlockStrategy string
+	ExecutorTimeout       int
+	LogId                 int
+	LogDateTim            int
+	GlueType              string
+	GlueSource            string
+	GlueUpdatetime        int
+	BroadcastIndex        int
+	BroadcastTotal        int
+}
+
+func (TriggerParam) JavaClassName() string {
+	return "com.xxl.job.core.biz.model.TriggerParam"
+}
+
+type XxlRpcRequest struct {
+	RequestId        string
+	CreateMillisTime int
+	AccessToken      string
+	ClassName        string
+	MethodName       string
+	ParameterTypes   []java_exception.Class
+	Parameters       []interface{}
+	Version          string
+}
+
+func (XxlRpcRequest) JavaClassName() string {
+	return "com.xxl.rpc.remoting.net.params.XxlRpcRequest"
+}
+
+func TestSerializerHttp(t *testing.T) {
+	fmt.Println("server start")
+	http.HandleFunc("/", test)
+	_ = http.ListenAndServe(":30122", nil)
+}
+
+func test(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("aasdf")
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("read body err, %v\n", err)
+		return
+	}
+	fmt.Println(body)
+	fmt.Println(string(body))
+	f, _ := os.Create("test.dat")
+	_, _ = f.Write(body)
+	_ = f.Close()
+	SerializerHttp(body)
+}
+
+func SerializerHttp(bt []byte) {
+
+	//e := NewEncoder()
+	//x := XxlRpcRequest{
+	//	RequestId: "123411111111111111111111111111111111111111111111",
+	//}
+	//e.Encode(x)
+	RegisterPOJO(XxlRpcRequest{})
+	RegisterPOJO(TriggerParam{})
+	d := NewDecoder(bt)
+	res, err := d.Decode()
+	resJson, _ := json.Marshal(res)
+	if err != nil {
+		fmt.Printf("Decode() = %+v", err)
+	}
+	fmt.Printf("decode = %v, %v\n", string(resJson), err)
+}
+
+func TestSerializerFile(t *testing.T) {
+
+	//e := NewEncoder()
+	//x := XxlRpcRequest{
+	//	RequestId: "123411111111111111111111111111111111111111111111",
+	//	CreateMillisTime: 0,
+	//}
+	//e.Encode(x)
+	RegisterPOJO(XxlRpcRequest{})
+	RegisterPOJO(TriggerParam{})
+	f, _ := os.Open("run.dat")
+	bt, _ := ioutil.ReadAll(f)
+	_ = f.Close()
+	for e := range bt {
+		fmt.Printf("0x%x ", bt[e])
+	}
+	fmt.Println()
+	fmt.Println(string(bt))
+	//hexStr := hex.EncodeToString(bt)
+	//t.Logf("raw data = %v", hexStr)
+	d := NewDecoder(bt)
+	res, err := d.Decode()
+	if err != nil {
+		t.Errorf("Decode() = %+v", err)
+	}
+	resJson, _ := json.Marshal(res)
+	t.Logf("decode = %v, %v\n", string(resJson), err)
+}
 
 type Department struct {
 	Name string
