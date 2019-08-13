@@ -5,5 +5,5 @@ RUN go get -u github.com/pkg/errors
 COPY ./ $GOPATH/src/github.com/apache/dubbo-go-hessian2/
 COPY ./run $GOPATH/src/github.com/apache/dubbo-go-hessian2/run
 WORKDIR $GOPATH/src/github.com/apache/dubbo-go-hessian2/run
-EXPOSE 20123
+EXPOSE 31123
 ENTRYPOINT ["go","run","Http.go"]
