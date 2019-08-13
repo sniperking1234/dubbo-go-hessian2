@@ -14,7 +14,7 @@ import (
 func main() {
 	fmt.Println("server start")
 	http.HandleFunc("/", test)
-	_ = http.ListenAndServe(":31123", nil)
+	_ = http.ListenAndServe(":2001", nil)
 }
 
 type TriggerParam struct {
